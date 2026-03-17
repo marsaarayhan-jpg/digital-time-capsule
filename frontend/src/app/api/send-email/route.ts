@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'Capsule Time <onboarding@resend.dev>',
+      from: 'Digital Time Capsule <noreply@timecapsule.my.id>',
       to: [receiverEmail],
       subject: `Ada Kapsul Waktu untuk Anda: ${title}`,
       html: `
