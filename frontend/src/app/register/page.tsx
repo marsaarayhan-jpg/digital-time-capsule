@@ -7,9 +7,13 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { motion } from "framer-motion";
 
+import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -26,12 +30,17 @@ export default function Register() {
       setError(error.message);
       setLoading(false);
     } else if (data.session) {
-      // Langsung login (email confirmation dinonaktifkan di Supabase)
+      toast.success("Welcome to the Vault", {
+        description: "Your account has been created successfully."
+      });
       router.push("/dashboard");
     } else {
       // Email confirmation aktif — tampilkan pesan untuk cek email
       setLoading(false);
       setSuccess("Account created! Please check your email to confirm your account before logging in.");
+      toast.success("Account Created", {
+        description: "Please check your email to confirm your account."
+      });
     }
   };
 
@@ -105,14 +114,23 @@ export default function Register() {
                 <label className="block font-sans text-[10px] uppercase tracking-[0.25em] text-parchment/60 mb-3">
                   Password
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full bg-black/40 border border-parchment/20 focus:border-terracotta focus:bg-black/60 outline-none px-5 py-3.5 font-sans text-sm text-parchment placeholder:text-parchment/20 transition-all duration-300"
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full bg-black/40 border border-parchment/20 focus:border-terracotta focus:bg-black/60 outline-none px-5 py-3.5 pr-12 font-sans text-sm text-parchment placeholder:text-parchment/20 transition-all duration-300"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-parchment/30 hover:text-parchment/60 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
                 <p className="text-[11px] text-parchment/30 mt-2 font-sans">Minimum 6 characters</p>
               </div>
 
