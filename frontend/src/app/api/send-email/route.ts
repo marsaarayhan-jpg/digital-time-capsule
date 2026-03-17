@@ -4,10 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
+// Tandai route ini sebagai dynamic agar Vercel tidak mencoba me-render secara statis saat build
+export const dynamic = 'force-dynamic';
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // 1. Setup Rate Limiting (Upstash Redis)
-// Jika variabel env tidak ada, kita buat fallback untuk development
 const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
   ? new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL,
@@ -18,19 +20,23 @@ const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_R
 const ratelimit = redis 
   ? new Ratelimit({
       redis: redis,
-      limiter: Ratelimit.slidingWindow(1, "60 s"), // BATAS: 1 email per 60 detik
+      limiter: Ratelimit.slidingWindow(1, "60 s"),
     })
   : null;
 
-// Initialize Supabase Admin (untuk verifikasi session di server)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export async function POST(request: Request) {
   try {
-    // 2. KEAMANAN: Verifikasi Session User (Hanya yang login bisa kirim email)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json({ error: 'Konfigurasi Supabase belum lengkap di server.' }, { status: 500 });
+    }
+
+    // Initialize Supabase Admin di dalam handler
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+
+    // 2. KEAMANAN: Verifikasi Session User
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.split(' ')[1] || (await request.headers.get('x-supabase-auth'));
     
@@ -40,7 +46,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Akses Ditolak: Anda harus login untuk mengirim email.' }, { status: 401 });
     }
 
-    // 3. KEAMANAN: Rate Limiting (Mencegah Spam)
+    // 3. KEAMANAN: Rate Limiting
     if (ratelimit) {
       const { success, limit, reset, remaining } = await ratelimit.limit(user.id);
       
