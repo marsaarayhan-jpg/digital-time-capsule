@@ -80,19 +80,51 @@ export default function CapsuleDetail() {
     fetchCapsule();
   }, [id, router]);
 
+  // =============== REALTIME SUBSCRIPTION FOR COMMENTS ===============
+  useEffect(() => {
+    if (!id) return;
+
+    // Subscribe to changes on the comments table for THIS specific capsule
+    const channel = supabase
+      .channel(`capsule-comments-${id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'comments',
+          filter: `capsule_id=eq.${id}`,
+        },
+        (payload) => {
+          const newComment = payload.new as Comment;
+          setComments((prev) => {
+            // Prevent duplicate if the local insert already added it (though we'll refactor submit)
+            if (prev.find(c => c.id === newComment.id)) return prev;
+            return [...prev, newComment];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id]);
+
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || !user) return;
 
-    const { data, error } = await supabase
+    // We don't need to manually update state here anymore 
+    // because our Realtime subscription will catch the insert and update the UI!
+    const { error } = await supabase
       .from("comments")
-      .insert([{ capsule_id: id, user_id: user.id, comment: newComment }])
-      .select()
-      .single();
+      .insert([{ capsule_id: id, user_id: user.id, comment: newComment }]);
 
-    if (!error && data) {
-      setComments([...comments, data]);
+    if (!error) {
       setNewComment("");
+    } else {
+      toast.error("Failed to post reflection");
     }
   };
 
