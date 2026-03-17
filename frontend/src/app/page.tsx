@@ -27,18 +27,18 @@ export default function Home() {
               gyroControls: false,
               minHeight: 200.00,
               minWidth: 200.00,
-              scale: 2.00, // Menaikkan scale untuk meringankan beban GPU
+              scale: 1.00,
               scaleMobile: 1.00,
-              backgroundColor: 0x1f1612,
-              color1: 0x8a6e4d,
-              color2: 0xbc5d45,
-              birdSize: 1.5, // Ukuran sedikit lebih besar agar lebih terlihat estetik
-              wingSpan: 24.0,
-              speedLimit: 3.5, // Kecepatan sedikit lebih tinggi agar pergerakan terasa dinamis
-              separation: 70.0,
-              alignment: 40.0,
-              cohesion: 30.0,
-              quantity: 5.0 // Penambahan tipis untuk keseimbangan visual
+              backgroundColor: 0x1f1612, // Deep warm charcoal/espresso backdrop
+              color1: 0x8a6e4d, // Muted bronze birds
+              color2: 0xbc5d45, // Soft terracotta birds
+              birdSize: 1.2,
+              wingSpan: 20.0,
+              speedLimit: 2.5,
+              separation: 80.0,
+              alignment: 30.0,
+              cohesion: 20.0,
+              quantity: 4.0 // Less crowded
             })
           );
         }
