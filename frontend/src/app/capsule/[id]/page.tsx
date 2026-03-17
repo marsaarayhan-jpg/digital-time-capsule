@@ -11,6 +11,7 @@ import CountdownTimer from "@/components/CountdownTimer";
 import { motion } from "framer-motion";
 import { Lock, Unlock, Send } from "lucide-react";
 import { decryptMessage } from "@/lib/encryptionUtils";
+import { toast } from "sonner";
 
 export default function CapsuleDetail() {
   const params = useParams();
