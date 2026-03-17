@@ -8,6 +8,8 @@ import { motion } from "framer-motion";
 import { sendCapsuleNotification } from "@/lib/emailService";
 import { toast } from "sonner";
 
+import { encryptMessage } from "@/lib/encryptionUtils";
+
 export default function CreateCapsule() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -57,10 +59,13 @@ export default function CreateCapsule() {
       return;
     }
 
+    // ENKRIPSI PESAN SEBELUM DISIMPAN
+    const encryptedMessage = encryptMessage(formData.message);
+
     const { error: insertError } = await supabase.from("capsules").insert([
       {
         title: formData.title,
-        message: formData.message,
+        message: encryptedMessage,
         receiver_email: formData.receiverEmail,
         open_date: formData.openDate,
         sender_id: user.id,

@@ -10,6 +10,7 @@ import Navbar from "@/components/Navbar";
 import CountdownTimer from "@/components/CountdownTimer";
 import { motion } from "framer-motion";
 import { Lock, Unlock, Send } from "lucide-react";
+import { decryptMessage } from "@/lib/encryptionUtils";
 
 export default function CapsuleDetail() {
   const params = useParams();
@@ -53,7 +54,13 @@ export default function CapsuleDetail() {
         return;
       }
 
-      setCapsule(capsuleData);
+      // DEKRIPSI PESAN SEBELUM DI-SET KE STATE
+      const decryptedData = {
+        ...capsuleData,
+        message: decryptMessage(capsuleData.message)
+      };
+
+      setCapsule(decryptedData);
 
       // Fix #8: Gunakan utility function dari capsuleUtils
       const isLocked = getCapsuleLockStatus(capsuleData.open_date) === "locked";

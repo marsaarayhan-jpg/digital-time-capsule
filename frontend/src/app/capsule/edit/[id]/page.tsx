@@ -8,6 +8,8 @@ import { motion } from "framer-motion";
 import { getCapsuleLockStatus } from "@/lib/capsuleUtils";
 import { toast } from "sonner";
 
+import { encryptMessage, decryptMessage } from "@/lib/encryptionUtils";
+
 export default function EditCapsule({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
@@ -59,9 +61,10 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
         return;
       }
 
+      // DEKRIPSI PESAN UNTUK DITAMPILKAN DI FORM
       setFormData({
         title: capsule.title,
-        message: capsule.message,
+        message: decryptMessage(capsule.message),
         receiverEmail: capsule.receiver_email,
         openDate: capsule.open_date,
       });
@@ -86,11 +89,14 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
       return;
     }
 
+    // ENKRIPSI PESAN SEBELUM UPDATE
+    const encryptedMessage = encryptMessage(formData.message);
+
     const { error: updateError } = await supabase
       .from("capsules")
       .update({
         title: formData.title,
-        message: formData.message,
+        message: encryptedMessage,
         receiver_email: formData.receiverEmail,
         open_date: formData.openDate,
       })
