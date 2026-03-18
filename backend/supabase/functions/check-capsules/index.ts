@@ -42,13 +42,15 @@ Deno.serve(async (req) => {
             to: [cap.receiver_email],
             subject: `Kapsul Waktu Anda Terbuka: ${cap.title}`,
             html: `
-              <div style="font-family: sans-serif; padding: 20px;">
-                <h2>Halo!</h2>
-                <p>Kapsul waktu berharga dari <strong>${cap.sender_name || 'Alamat Anda'}</strong> sudah bisa Anda buka sekarang.</p>
-                <p>Judul: <strong>${cap.title}</strong></p>
-                <p>Silakan kunjungi Vault Anda untuk membacanya.</p>
-                <br />
-                <a href="https://digital-time-capsule.vercel.app/dashboard" style="background: #c15e3e; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">Buka Vault Sekarang</a>
+              <div style="font-family: serif; padding: 20px; color: #1f1612; background-color: #fdfaf6; border: 1px solid #e2d1c3;">
+                <h2 style="color: #c15e3e; font-weight: 300;">Halo!</h2>
+                <p style="font-size: 16px;">Kapsul waktu berharga dengan judul <strong>"${cap.title}"</strong> sudah bisa Anda buka sekarang.</p>
+                <div style="margin: 30px 0;">
+                  <a href="https://timecapsule.my.id/capsule/${cap.id}" style="background: #c15e3e; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Lihat Kapsul di Vault</a>
+                </div>
+                <p style="font-size: 14px; color: #8a7b6f;">Silakan login ke Vault Anda untuk membacanya.</p>
+                <hr style="border: 0; border-top: 1px solid #e2d1c3; margin: 40px 0;" />
+                <p style="font-size: 12px; color: #8a7b6f; text-align: center;">Digital Time Capsule Platform</p>
               </div>
             `
           }),
