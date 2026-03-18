@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     }
 
     const { data, error } = await resend.emails.send({
-      from: 'Digital Time Capsule <noreply@send.timecapsule.my.id>',
+      from: '"Digital Time Capsule" <noreply@timecapsule.my.id>', // Coba balik ke root tanpa 'send'
       to: [receiverEmail],
       subject: `Ada Kapsul Waktu untuk Anda: ${title}`,
       html: `
@@ -96,6 +96,7 @@ export async function POST(request: Request) {
     });
 
     if (error) {
+      console.error("[RESEND-ERROR] Detail:", JSON.stringify(error, null, 2));
       return NextResponse.json({ error }, { status: 400 });
     }
 
