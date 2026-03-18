@@ -66,13 +66,17 @@ export async function POST(request: Request) {
     }
 
     const { receiverEmail, title, openDate, senderName } = await request.json();
+    console.log(`[DEBUG] Mencoba kirim email ke: ${receiverEmail} untuk judul: ${title}`);
 
     if (!process.env.RESEND_API_KEY) {
+      console.error("[DEBUG] ERROR: RESEND_API_KEY tidak ditemukan!");
       return NextResponse.json({ error: 'RESEND_API_KEY belum terkonfigurasi di server.' }, { status: 500 });
     }
 
+    console.log("[DEBUG] Menggunakan API Key (4 digit awal):", process.env.RESEND_API_KEY.substring(0, 4));
+
     const { data, error } = await resend.emails.send({
-      from: '"Digital Time Capsule" <noreply@timecapsule.my.id>', // Coba balik ke root tanpa 'send'
+      from: 'noreply@timecapsule.my.id', // Gunakan versi paling polos
       to: [receiverEmail],
       subject: `Ada Kapsul Waktu untuk Anda: ${title}`,
       html: `
@@ -96,10 +100,11 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      console.error("[RESEND-ERROR] Detail:", JSON.stringify(error, null, 2));
+      console.error("[DEBUG-ERROR] Detail Lengkap:", JSON.stringify(error, null, 2));
       return NextResponse.json({ error }, { status: 400 });
     }
 
+    console.log("[DEBUG-SUCCESS] Email berhasil terkirim via Resend!", data?.id);
     return NextResponse.json({ success: true, data });
   } catch (err) {
     console.error("Internal Server Error:", err);
