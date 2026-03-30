@@ -100,7 +100,8 @@ export default function Home() {
             className="font-serif font-light text-xl md:text-2xl text-parchment/60 max-w-xl mb-14 leading-relaxed tracking-wide italic"
           >
             A private sanctuary for the thoughts of today,
-            <br className="hidden md:block" /> meant only for the eyes of tomorrow.
+            <br className="hidden md:block" /> meant only for the eyes of tomorrow. 
+            <span className="block mt-4 text-sm not-italic opacity-40 font-sans uppercase tracking-[0.2em]">Kapsul Waktu Digital Indonesia</span>
           </motion.p>
 
           <motion.div
@@ -161,6 +162,8 @@ export default function Home() {
                 Some messages are
                 <br />
                 <em className="font-normal text-gold/80 not-italic font-serif italic">not meant for today.</em>
+                <br />
+                <span className="block mt-4 text-xs font-sans uppercase tracking-[0.3em] text-terracotta/40">Kapsul Waktu Digital</span>
               </h2>
               <div className="space-y-5 border-l-2 border-gold/30 pl-7">
                 <p className="font-serif font-light text-lg text-parchment/70 leading-relaxed">

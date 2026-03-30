@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     default: "Digital Time Capsule — Seal Your Memories for the Future",
     template: "%s | Digital Time Capsule"
   },
-  description: "Experience the most elegant digital time capsule. Seal your memories, messages, and future reflections until the perfect moment. Kapsul waktu digital terbaik untuk masa depan Anda.",
+  description: "Experience the most elegant digital time capsule. Seal your memories, messages, and future reflections until the perfect moment. Kapsul waktu digital terbaik di Indonesia untuk masa depan Anda.",
   keywords: [
     "digital time capsule", 
     "future messages", 
@@ -34,7 +34,11 @@ export const metadata: Metadata = {
     "send messages to the future",
     "digital safe for memories",
     "online time capsule",
-    "digital vault"
+    "digital vault",
+    "kapsul waktu indonesia",
+    "titip pesan masa depan",
+    "simpan memori digital",
+    "aplikasi kapsul waktu"
   ],
   authors: [{ name: "Digital Time Capsule Team" }],
   creator: "Digital Time Capsule",
