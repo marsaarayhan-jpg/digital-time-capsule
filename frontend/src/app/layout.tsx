@@ -65,7 +65,12 @@ export const metadata: Metadata = {
     images: ["/og-image.jpg"],
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/icon.png" },
+      { url: "/icon.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/icon.png",
   },
   verification: {
     google: "google4e3cc6d7cbb7bf70",
@@ -83,6 +88,9 @@ export const metadata: Metadata = {
       'max-image-preview': 'large',
       'max-snippet': -1,
     },
+  },
+  other: {
+    thumbnail: "https://timecapsule.my.id/og-image.jpg",
   },
 };
 
@@ -108,6 +116,7 @@ export default function RootLayout({
               "@type": "WebSite",
               "name": "Digital Time Capsule",
               "url": "https://timecapsule.my.id",
+              "image": "https://timecapsule.my.id/og-image.jpg",
               "description": "Seal your memories for the future with our digital time capsule.",
               "potentialAction": {
                 "@type": "SearchAction",

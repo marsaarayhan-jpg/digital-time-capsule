@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import { motion } from "framer-motion";
 import { getCapsuleLockStatus } from "@/lib/capsuleUtils";
 import { toast } from "sonner";
+import { Eye, EyeOff } from "lucide-react";
 
 import { encryptMessage, decryptMessage } from "@/lib/encryptionUtils";
 
@@ -17,6 +18,7 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [showTitle, setShowTitle] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -61,9 +63,9 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
         return;
       }
 
-      // DEKRIPSI PESAN UNTUK DITAMPILKAN DI FORM
+      // DEKRIPSI JUDUL DAN PESAN UNTUK DITAMPILKAN DI FORM
       setFormData({
-        title: capsule.title,
+        title: decryptMessage(capsule.title),
         message: decryptMessage(capsule.message),
         receiverEmail: capsule.receiver_email,
         openDate: capsule.open_date,
@@ -89,13 +91,14 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
       return;
     }
 
-    // ENKRIPSI PESAN SEBELUM UPDATE
+    // ENKRIPSI JUDUL DAN PESAN SEBELUM UPDATE
+    const encryptedTitle = encryptMessage(formData.title);
     const encryptedMessage = encryptMessage(formData.message);
 
     const { error: updateError } = await supabase
       .from("capsules")
       .update({
-        title: formData.title,
+        title: encryptedTitle,
         message: encryptedMessage,
         receiver_email: formData.receiverEmail,
         open_date: formData.openDate,
@@ -151,13 +154,22 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
                   <label className="block font-sans text-[10px] uppercase tracking-[0.25em] text-parchment/60 mb-3">
                     Capsule Title
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full bg-black/20 border border-parchment/10 focus:border-terracotta outline-none px-5 py-4 font-serif text-xl text-parchment"
-                  />
+                  <div className="relative group/input">
+                    <input
+                      type={showTitle ? "text" : "password"}
+                      required
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="w-full bg-black/20 border border-parchment/10 focus:border-terracotta outline-none px-5 py-4 font-serif text-xl text-parchment pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowTitle(!showTitle)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-parchment/40 hover:text-gold transition-colors"
+                    >
+                      {showTitle ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div>

@@ -10,7 +10,7 @@ import Navbar from "@/components/Navbar";
 import CountdownTimer from "@/components/CountdownTimer";
 import { motion } from "framer-motion";
 import { Lock, Unlock, Send } from "lucide-react";
-import { decryptMessage } from "@/lib/encryptionUtils";
+import { decryptMessage, encryptMessage } from "@/lib/encryptionUtils";
 import { toast } from "sonner";
 
 export default function CapsuleDetail() {
@@ -58,6 +58,7 @@ export default function CapsuleDetail() {
       // DEKRIPSI PESAN SEBELUM DI-SET KE STATE
       const decryptedData = {
         ...capsuleData,
+        title: decryptMessage(capsuleData.title),
         message: decryptMessage(capsuleData.message)
       };
 
@@ -72,7 +73,11 @@ export default function CapsuleDetail() {
           .select("*")
           .eq("capsule_id", id)
           .order("created_at", { ascending: true });
-        setComments(commentsData || []);
+        const decryptedComments = (commentsData || []).map(c => ({
+          ...c,
+          comment: decryptMessage(c.comment)
+        }));
+        setComments(decryptedComments);
       }
 
       setLoading(false);
@@ -98,10 +103,14 @@ export default function CapsuleDetail() {
         },
         (payload) => {
           const newComment = payload.new as Comment;
+          const decryptedComment = {
+            ...newComment,
+            comment: decryptMessage(newComment.comment)
+          };
           setComments((prev) => {
             // Prevent duplicate if the local insert already added it (though we'll refactor submit)
-            if (prev.find(c => c.id === newComment.id)) return prev;
-            return [...prev, newComment];
+            if (prev.find(c => c.id === decryptedComment.id)) return prev;
+            return [...prev, decryptedComment];
           });
         }
       )
@@ -118,9 +127,12 @@ export default function CapsuleDetail() {
 
     // We don't need to manually update state here anymore 
     // because our Realtime subscription will catch the insert and update the UI!
+    // ENKRIPSI KOMENTAR SEBELUM DISIMPAN
+    const encryptedComment = encryptMessage(newComment);
+
     const { error } = await supabase
       .from("comments")
-      .insert([{ capsule_id: id, user_id: user.id, comment: newComment }]);
+      .insert([{ capsule_id: id, user_id: user.id, comment: encryptedComment }]);
 
     if (!error) {
       setNewComment("");

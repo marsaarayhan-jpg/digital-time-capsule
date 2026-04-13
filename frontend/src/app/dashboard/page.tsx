@@ -12,6 +12,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import { decryptMessage } from "@/lib/encryptionUtils";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -191,7 +192,7 @@ export default function Dashboard() {
               >
                 <CapsuleCard
                   id={capsule.id}
-                  title={activeTab === "received" && getStatus(capsule.open_date) === "locked" ? "Secret Capsule" : capsule.title}
+                  title={activeTab === "received" && getStatus(capsule.open_date) === "locked" ? "Secret Capsule" : decryptMessage(capsule.title)}
                   openDate={capsule.open_date}
                   status={getStatus(capsule.open_date)}
                   type={activeTab}
