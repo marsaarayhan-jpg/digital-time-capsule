@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# next.js
+frontend/.next/
+frontend/out/
+
+# production
+frontend/build/
+
+# env files
+.env*
+frontend/.env*
+backend/.env*
+
+# logs
+*.log
+npm-debug.log*
+
+# system files
+.DS_Store
+Thumbs.db
