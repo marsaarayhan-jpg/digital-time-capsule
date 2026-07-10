@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { sendCapsuleNotification } from "@/lib/emailService";
 import { toast } from "sonner";
 import { encryptMessage } from "@/lib/encryptionUtils";
-import { Eye, EyeOff, ImagePlus, X, UploadCloud } from "lucide-react";
+import { ImagePlus, X, UploadCloud } from "lucide-react";
 
 const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -18,7 +18,6 @@ export default function CreateCapsule() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
-  const [showTitle, setShowTitle] = useState(false);
 
   // Photo states
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -137,7 +136,8 @@ export default function CreateCapsule() {
       try {
         photoUrl = await uploadPhoto(user.id);
       } catch (err) {
-        setError("Failed to upload photo. Please try again.");
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        setError(`Failed to upload photo: ${msg}. Make sure the 'capsule-photos' storage bucket exists in Supabase.`);
         setLoading(false);
         return;
       }
@@ -233,23 +233,14 @@ export default function CreateCapsule() {
                 <label className="block font-sans text-[10px] uppercase tracking-[0.25em] text-parchment/60 mb-3">
                   Capsule Title
                 </label>
-                <div className="relative group/input">
-                  <input
-                    type={showTitle ? "text" : "password"}
-                    required
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="e.g., To My Future Self"
-                    className="w-full bg-black/20 border border-parchment/10 focus:border-terracotta focus:bg-black/40 outline-none px-5 py-4 font-serif text-xl text-parchment placeholder:text-parchment/20 transition-all duration-300 pr-12"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowTitle(!showTitle)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-parchment/40 hover:text-gold transition-colors"
-                  >
-                    {showTitle ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
+                <input
+                  type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="e.g., To My Future Self"
+                  className="w-full bg-black/20 border border-parchment/10 focus:border-terracotta focus:bg-black/40 outline-none px-5 py-4 font-serif text-xl text-parchment placeholder:text-parchment/20 transition-all duration-300"
+                />
               </div>
 
               <div>

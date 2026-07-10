@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import { motion } from "framer-motion";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -47,6 +47,15 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
         >
+          {/* Back to Home */}
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 font-sans text-[11px] uppercase tracking-[0.2em] text-parchment/40 hover:text-gold transition-colors duration-300 mb-10 group"
+          >
+            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform duration-300" />
+            Back to Home
+          </Link>
+
           {/* Header */}
           <div className="text-center mb-12">
             <div className="flex items-center justify-center gap-3 mb-8">
