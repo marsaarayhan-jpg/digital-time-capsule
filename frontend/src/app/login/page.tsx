@@ -47,13 +47,13 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
         >
-          {/* Back to Home */}
+          {/* Back to Home Button (Fixed Top Left) */}
           <Link
             href="/"
-            className="inline-flex items-center gap-2 font-sans text-[11px] uppercase tracking-[0.2em] text-parchment/40 hover:text-gold transition-colors duration-300 mb-10 group"
+            className="fixed top-6 left-6 md:top-8 md:left-10 z-50 inline-flex items-center gap-2.5 px-5 py-2.5 bg-black/40 hover:bg-black/70 border border-parchment/20 hover:border-gold/60 backdrop-blur-md font-sans text-xs uppercase tracking-[0.2em] text-parchment hover:text-gold transition-all duration-300 shadow-lg group"
           >
-            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform duration-300" />
-            Back to Home
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform duration-300 text-terracotta group-hover:text-gold" />
+            <span>Back to Home</span>
           </Link>
 
           {/* Header */}
