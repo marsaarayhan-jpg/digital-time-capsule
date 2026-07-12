@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { getCapsuleLockStatus } from "@/lib/capsuleUtils";
+import { getCapsuleLockStatus, deleteCapsuleComplete } from "@/lib/capsuleUtils";
 import type { Capsule } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -72,7 +72,8 @@ export default function Dashboard() {
   const confirmDelete = async () => {
     if (!idToDelete) return;
 
-    const { error } = await supabase.from("capsules").delete().eq("id", idToDelete);
+    const targetCapsule = [...sentCapsules, ...receivedCapsules].find(c => c.id === idToDelete);
+    const { error } = await deleteCapsuleComplete(idToDelete, targetCapsule?.photo_url);
 
     if (error) {
       toast.error("Failed to delete capsule", {
@@ -82,7 +83,7 @@ export default function Dashboard() {
       setSentCapsules((prev) => prev.filter((cap) => cap.id !== idToDelete));
       setReceivedCapsules((prev) => prev.filter((cap) => cap.id !== idToDelete));
       toast.success("Capsule Deleted", {
-        description: "The memory has been removed from the vault."
+        description: "The memory and its photo have been permanently removed from the vault and storage."
       });
     }
     setIsDeleteModalOpen(false);

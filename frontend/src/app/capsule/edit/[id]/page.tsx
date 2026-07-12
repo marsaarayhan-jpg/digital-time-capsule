@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Navbar from "@/components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { getCapsuleLockStatus } from "@/lib/capsuleUtils";
+import { getCapsuleLockStatus, deleteCapsuleComplete, deleteCapsulePhotoFromStorage } from "@/lib/capsuleUtils";
 import { toast } from "sonner";
-import { Eye, EyeOff, ImagePlus, X, UploadCloud } from "lucide-react";
+import { Eye, EyeOff, ImagePlus, X, UploadCloud, Trash2 } from "lucide-react";
 import { encryptMessage, decryptMessage } from "@/lib/encryptionUtils";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -21,6 +22,7 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [showTitle, setShowTitle] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Photo states
   const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
@@ -153,6 +155,17 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
     return data.publicUrl;
   };
 
+  const confirmDelete = async () => {
+    const { error } = await deleteCapsuleComplete(id, existingPhotoUrl);
+    if (error) {
+      toast.error("Failed to delete capsule", { description: error.message });
+    } else {
+      toast.success("Capsule Deleted", { description: "The memory and its photo have been permanently removed." });
+      router.push("/dashboard");
+    }
+    setIsDeleteModalOpen(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -210,6 +223,11 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
       setError(updateError.message);
       setSaving(false);
     } else {
+      // Hapus foto lama di storage jika diganti foto baru atau dihapus
+      if (updatedPhotoUrl !== undefined && existingPhotoUrl && updatedPhotoUrl !== existingPhotoUrl) {
+        await deleteCapsulePhotoFromStorage(existingPhotoUrl);
+      }
+
       toast.success("Capsule Updated", {
         description: "The memory has been reshaped and resealed.",
       });
@@ -449,17 +467,37 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full bg-gold text-espresso py-5 font-sans text-xs uppercase tracking-[0.3em] font-bold hover:bg-terracotta hover:text-parchment transition-all"
-              >
-                {saving ? "Updating Capsule..." : "Save Changes →"}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex-[2] bg-gold text-espresso py-5 font-sans text-xs uppercase tracking-[0.3em] font-bold hover:bg-terracotta hover:text-parchment transition-all"
+                >
+                  {saving ? "Updating Capsule..." : "Save Changes →"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="flex-1 border border-terracotta/40 text-terracotta py-5 font-sans text-xs uppercase tracking-[0.25em] font-bold hover:bg-terracotta hover:text-parchment transition-all flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={15} />
+                  <span>Delete</span>
+                </button>
+              </div>
             </form>
           )}
         </motion.div>
       </div>
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        title="Delete Capsule"
+        message="Are you sure you want to permanently delete this memory? This will also remove any attached photos from storage."
+        confirmText="Delete Permanently"
+        cancelText="Keep Memory"
+        onConfirm={confirmDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+      />
     </main>
   );
 }

@@ -55,17 +55,17 @@ export default function CapsuleCard({ id, title, openDate, status, type, onDelet
           
           <div className="flex items-center gap-3">
             {type === "sent" && (
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="flex items-center gap-2.5 opacity-85 group-hover:opacity-100 transition-opacity duration-300">
                 {status === "locked" && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       router.push(`/capsule/edit/${id}`);
                     }}
-                    className="p-1.5 hover:bg-gold/10 text-parchment/40 hover:text-gold transition-colors border border-transparent hover:border-gold/20"
+                    className="p-2 rounded hover:bg-gold/15 text-parchment/70 hover:text-gold transition-colors border border-parchment/10 hover:border-gold/30"
                     title="Edit Capsule"
                   >
-                    <Edit3 size={13} />
+                    <Edit3 size={15} />
                   </button>
                 )}
                 <button
@@ -73,10 +73,10 @@ export default function CapsuleCard({ id, title, openDate, status, type, onDelet
                     e.stopPropagation();
                     onDelete?.(id, e);
                   }}
-                  className="p-1.5 hover:bg-terracotta/10 text-parchment/40 hover:text-terracotta transition-colors border border-transparent hover:border-terracotta/20"
+                  className="p-2 rounded hover:bg-terracotta/15 text-parchment/70 hover:text-terracotta transition-colors border border-parchment/10 hover:border-terracotta/30"
                   title="Delete Capsule"
                 >
-                  <Trash2 size={13} />
+                  <Trash2 size={15} />
                 </button>
               </div>
             )}

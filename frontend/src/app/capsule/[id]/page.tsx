@@ -4,14 +4,15 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
-import { getCapsuleLockStatus } from "@/lib/capsuleUtils";
+import { getCapsuleLockStatus, deleteCapsuleComplete } from "@/lib/capsuleUtils";
 import type { Capsule, Comment } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import CountdownTimer from "@/components/CountdownTimer";
 import { motion } from "framer-motion";
-import { Lock, Unlock, Send } from "lucide-react";
+import { Lock, Unlock, Send, Trash2 } from "lucide-react";
 import { decryptMessage, encryptMessage } from "@/lib/encryptionUtils";
 import { toast } from "sonner";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function CapsuleDetail() {
   const params = useParams();
@@ -23,6 +24,7 @@ export default function CapsuleDetail() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchCapsule = async () => {
@@ -120,6 +122,18 @@ export default function CapsuleDetail() {
       supabase.removeChannel(channel);
     };
   }, [id]);
+
+  const confirmDelete = async () => {
+    if (!capsule) return;
+    const { error } = await deleteCapsuleComplete(id, capsule.photo_url);
+    if (error) {
+      toast.error("Failed to delete capsule", { description: error.message });
+    } else {
+      toast.success("Capsule Deleted", { description: "The memory and its photo have been permanently removed." });
+      router.push("/dashboard");
+    }
+    setIsDeleteModalOpen(false);
+  };
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,20 +233,27 @@ export default function CapsuleDetail() {
               </div>
             </div>
 
-            {/* Edit Button for Sender */}
+            {/* Edit & Delete Buttons for Sender */}
             {isSender && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1 }}
-                className="mt-12"
+                className="mt-12 flex flex-wrap items-center justify-center gap-4"
               >
                 <Link
                   href={`/capsule/edit/${id}`}
-                  className="px-8 py-3 border border-gold/30 text-gold/80 font-sans text-[10px] uppercase tracking-[0.3em] hover:bg-gold/10 transition-all duration-300 flex items-center gap-3"
+                  className="px-8 py-3.5 border border-gold/30 text-gold/90 font-sans text-xs uppercase tracking-[0.25em] hover:bg-gold hover:text-espresso transition-all duration-300 flex items-center gap-3 font-bold"
                 >
                    Edit Locked Capsule
                 </Link>
+                <button
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className="px-8 py-3.5 border border-terracotta/40 text-terracotta font-sans text-xs uppercase tracking-[0.25em] hover:bg-terracotta hover:text-parchment transition-all duration-300 flex items-center gap-3 font-bold"
+                >
+                  <Trash2 size={15} />
+                  Delete Capsule
+                </button>
               </motion.div>
             )}
           </motion.div>
@@ -265,6 +286,18 @@ export default function CapsuleDetail() {
                 <span className="text-gold/40">·</span>
                 <span>{new Date(capsule.open_date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
               </div>
+
+              {isSender && (
+                <div className="mt-8 flex justify-center">
+                  <button
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className="px-6 py-2.5 border border-terracotta/40 text-terracotta font-sans text-xs uppercase tracking-[0.25em] hover:bg-terracotta hover:text-parchment transition-all duration-300 flex items-center gap-2.5 font-bold"
+                  >
+                    <Trash2 size={14} />
+                    Delete Capsule
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Message */}
@@ -275,25 +308,33 @@ export default function CapsuleDetail() {
               <div className="absolute bottom-0 left-0 w-8 h-8 border-b border-l border-gold/40" />
               <div className="absolute bottom-0 right-0 w-8 h-8 border-b border-r border-gold/40" />
 
-              <div className="bg-black/40 backdrop-blur-md border border-parchment/10 p-12 md:p-16 mx-4 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.5)]">
-                <p className="font-serif font-light text-xl md:text-2xl leading-[1.9] text-parchment/90 whitespace-pre-wrap">
+              <div className="bg-black/20 backdrop-blur-md border border-parchment/10 p-10 md:p-16">
+                <p className="font-serif text-2xl md:text-3xl font-light text-parchment leading-relaxed whitespace-pre-wrap">
                   {capsule.message}
                 </p>
+                
+                {/* Tampilkan Foto Capsule jika ada */}
+                {capsule.photo_url && (
+                  <div className="mt-10 border border-parchment/20 p-2 bg-black/40">
+                    <img 
+                      src={capsule.photo_url} 
+                      alt="Capsule Memory" 
+                      className="w-full max-h-[500px] object-contain mx-auto"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Comments / Reflections */}
+            {/* Reflections Section */}
             <div className="max-w-2xl mx-auto">
               <div className="flex items-center gap-4 mb-10">
-                <div className="h-px flex-1 bg-parchment/10" />
-                <span className="font-sans text-[10px] uppercase tracking-[0.3em] text-parchment/40">
-                  Reflections ({comments.length})
-                </span>
+                <span className="font-sans text-[10px] uppercase tracking-[0.3em] text-gold/80">Reflections & Notes</span>
                 <div className="h-px flex-1 bg-parchment/10" />
               </div>
 
-              {/* Comments List */}
-              <div className="space-y-5 mb-10">
+              {/* Comment list */}
+              <div className="space-y-6 mb-12">
                 {comments.map((comment) => (
                   <motion.div
                     key={comment.id}
@@ -335,6 +376,16 @@ export default function CapsuleDetail() {
           </motion.div>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        title="Delete Capsule"
+        message="Are you sure you want to permanently delete this memory? This will also remove any attached photos from storage."
+        confirmText="Delete Permanently"
+        cancelText="Keep Memory"
+        onConfirm={confirmDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+      />
     </main>
   );
 }
