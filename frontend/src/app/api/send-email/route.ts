@@ -46,20 +46,24 @@ export async function POST(request: Request) {
 
     // 3. KEAMANAN: Rate Limiting
     if (ratelimit) {
-      const { success, limit, reset, remaining } = await ratelimit.limit(user.id);
-      
-      if (!success) {
-        return NextResponse.json(
-          { error: 'Terlalu banyak permintaan. Silakan tunggu 1 menit sebelum mengirim kapsul lagi.' }, 
-          { 
-            status: 429,
-            headers: {
-              "X-RateLimit-Limit": limit.toString(),
-              "X-RateLimit-Remaining": remaining.toString(),
-              "X-RateLimit-Reset": reset.toString(),
+      try {
+        const { success, limit, reset, remaining } = await ratelimit.limit(user.id);
+        
+        if (!success) {
+          return NextResponse.json(
+            { error: 'Terlalu banyak permintaan. Silakan tunggu 1 menit sebelum mengirim kapsul lagi.' }, 
+            { 
+              status: 429,
+              headers: {
+                "X-RateLimit-Limit": limit.toString(),
+                "X-RateLimit-Remaining": remaining.toString(),
+                "X-RateLimit-Reset": reset.toString(),
+              }
             }
-          }
-        );
+          );
+        }
+      } catch (redisErr) {
+        console.warn("[WARN] Upstash Redis rate limit check failed, skipping rate limit check:", redisErr);
       }
     }
 
@@ -112,8 +116,9 @@ export async function POST(request: Request) {
 
     console.log("[DEBUG-SUCCESS] Email berhasil terkirim via Resend!", data?.id);
     return NextResponse.json({ success: true, data });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Internal Server Error:", err);
-    return NextResponse.json({ error: 'Terjadi kesalahan sistem di server Vercel.' }, { status: 500 });
+    const rawErr = err instanceof Error ? `${err.name}: ${err.message}` : (typeof err === 'string' ? err : JSON.stringify(err));
+    return NextResponse.json({ error: `Vercel Server Exception: ${rawErr}` }, { status: 500 });
   }
 }
