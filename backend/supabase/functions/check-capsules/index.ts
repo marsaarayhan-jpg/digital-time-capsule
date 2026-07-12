@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Digital Time Capsule <noreply@send.timecapsule.my.id>',
+            from: Deno.env.get('RESEND_FROM_EMAIL') ?? 'Digital Time Capsule <noreply@timecapsule.my.id>',
             to: [cap.receiver_email],
             subject: `Kapsul Waktu Anda Terbuka: ${cap.title}`,
             html: `

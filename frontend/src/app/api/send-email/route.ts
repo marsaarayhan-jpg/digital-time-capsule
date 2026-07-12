@@ -75,8 +75,12 @@ export async function POST(request: Request) {
 
     console.log("[DEBUG] Menggunakan API Key (4 digit awal):", process.env.RESEND_API_KEY.substring(0, 4));
 
+    // Gunakan RESEND_FROM_EMAIL jika diatur di Vercel, jika tidak gunakan default domain timecapsule.my.id
+    // Catatan: Jika domain timecapsule.my.id belum diverifikasi di Resend, atur RESEND_FROM_EMAIL=onboarding@resend.dev di Vercel.
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@timecapsule.my.id';
+
     const { data, error } = await resend.emails.send({
-      from: 'noreply@timecapsule.my.id', // Gunakan versi paling polos
+      from: fromEmail,
       to: [receiverEmail],
       subject: `Ada Kapsul Waktu untuk Anda: ${title}`,
       html: `
@@ -101,7 +105,8 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("[DEBUG-ERROR] Detail Lengkap:", JSON.stringify(error, null, 2));
-      return NextResponse.json({ error }, { status: 400 });
+      const errorMessage = typeof error === 'string' ? error : (error.message || JSON.stringify(error));
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
     console.log("[DEBUG-SUCCESS] Email berhasil terkirim via Resend!", data?.id);

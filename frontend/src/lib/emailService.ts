@@ -36,9 +36,12 @@ export const sendCapsuleNotification = async (
 
     const result = await response.json();
 
-    if (!response.ok) {
-      console.error("[EMAIL-SERVICE] Gagal mengirim email via API Route:", result.error);
-      return { success: false, error: result.error };
+    if (!response.ok || !result.success) {
+      const errorMsg = typeof result.error === 'string' 
+        ? result.error 
+        : (result.error?.message || JSON.stringify(result.error) || "Gagal mengirim email.");
+      console.error("[EMAIL-SERVICE] Gagal mengirim email via API Route:", errorMsg);
+      return { success: false, error: errorMsg };
     }
 
     console.log(`[EMAIL-SERVICE] Email berhasil dikirim melalui Server! ID: ${result.data?.id}`);

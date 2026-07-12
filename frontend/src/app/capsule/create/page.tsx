@@ -163,21 +163,34 @@ export default function CreateCapsule() {
       setLoading(false);
     } else {
       // Kirim Notifikasi Email (Simulasi/Bridge)
+      let emailSent = false;
+      let emailErrorMsg = "";
       try {
-        await sendCapsuleNotification(
+        const emailResult = await sendCapsuleNotification(
           formData.receiverEmail,
           formData.title,
           formData.openDate,
           user.email || "A friend"
         );
+        if (emailResult.success) {
+          emailSent = true;
+        } else {
+          emailErrorMsg = emailResult.error || "Gagal mengirim email ke penerima.";
+        }
       } catch (err) {
+        emailErrorMsg = err instanceof Error ? err.message : "Gagal memanggil API email.";
         console.error("Failed to send notification email:", err);
-        // Kita tidak menghentikan flow jika email gagal, agar capsule tetap tersimpan
       }
 
-      toast.success("Capsule Sealed Successfully", {
-        description: "Your memory has been locked in time.",
-      });
+      if (emailSent) {
+        toast.success("Capsule Sealed & Email Sent", {
+          description: `Your memory is sealed, and a notification was sent to ${formData.receiverEmail}.`,
+        });
+      } else {
+        toast.warning("Capsule Saved, but Email Failed", {
+          description: `Memory saved to vault, but Resend email delivery failed: "${emailErrorMsg}". Please verify your domain in Resend or check your RESEND_FROM_EMAIL.`,
+        });
+      }
 
       setLoading(false); // Fix #11: reset loading state sebelum navigate
       router.push("/dashboard");
