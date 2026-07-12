@@ -7,8 +7,6 @@ import { Redis } from "@upstash/redis";
 // Tandai route ini sebagai dynamic agar Vercel tidak mencoba me-render secara statis saat build
 export const dynamic = 'force-dynamic';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 // 1. Setup Rate Limiting (Upstash Redis)
 const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
   ? new Redis({
@@ -70,14 +68,16 @@ export async function POST(request: Request) {
 
     if (!process.env.RESEND_API_KEY) {
       console.error("[DEBUG] ERROR: RESEND_API_KEY tidak ditemukan!");
-      return NextResponse.json({ error: 'RESEND_API_KEY belum terkonfigurasi di server.' }, { status: 500 });
+      return NextResponse.json({ error: 'RESEND_API_KEY belum terkonfigurasi di server Vercel.' }, { status: 500 });
     }
 
-    console.log("[DEBUG] Menggunakan API Key (4 digit awal):", process.env.RESEND_API_KEY.substring(0, 4));
+    // Inisialisasi Resend DI DALAM handler agar selalu menggunakan API Key terbaru dari env Vercel
+    const resend = new Resend(process.env.RESEND_API_KEY.trim());
+
+    console.log("[DEBUG] Menggunakan API Key (4 digit awal):", process.env.RESEND_API_KEY.trim().substring(0, 4));
 
     // Gunakan RESEND_FROM_EMAIL jika diatur di Vercel, jika tidak gunakan default domain timecapsule.my.id
-    // Catatan: Jika domain timecapsule.my.id belum diverifikasi di Resend, atur RESEND_FROM_EMAIL=onboarding@resend.dev di Vercel.
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@timecapsule.my.id';
+    const fromEmail = process.env.RESEND_FROM_EMAIL ? process.env.RESEND_FROM_EMAIL.trim() : 'noreply@timecapsule.my.id';
 
     const { data, error } = await resend.emails.send({
       from: fromEmail,
@@ -105,14 +105,15 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("[DEBUG-ERROR] Detail Lengkap:", JSON.stringify(error, null, 2));
-      const errorMessage = typeof error === 'string' ? error : (error.message || JSON.stringify(error));
-      return NextResponse.json({ error: errorMessage }, { status: 400 });
+      const rawMsg = typeof error === 'string' ? error : (error.message || JSON.stringify(error));
+      const detailedError = `${rawMsg} (Pengirim: ${fromEmail})`;
+      return NextResponse.json({ error: detailedError }, { status: 400 });
     }
 
     console.log("[DEBUG-SUCCESS] Email berhasil terkirim via Resend!", data?.id);
     return NextResponse.json({ success: true, data });
   } catch (err) {
     console.error("Internal Server Error:", err);
-    return NextResponse.json({ error: 'Terjadi kesalahan sistem.' }, { status: 500 });
+    return NextResponse.json({ error: 'Terjadi kesalahan sistem di server Vercel.' }, { status: 500 });
   }
 }
