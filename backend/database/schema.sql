@@ -33,16 +33,14 @@ CREATE TABLE comments (
 ALTER TABLE capsules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 
--- Policy untuk Capsules (SELECT): Data dapat dilihat jika user adalah sender, atau receiver yang belum menghapusnya (soft delete 1 arah)
+-- Policy untuk Capsules (SELECT): Data dapat dilihat oleh sender atau receiver
 DROP POLICY IF EXISTS "Users can view their own sent or received capsules" ON capsules;
 CREATE POLICY "Users can view their own sent or received capsules"
 ON capsules FOR SELECT
 USING (
     auth.uid() = sender_id OR 
-    (
-        (auth.uid() = receiver_id OR (auth.jwt() ->> 'email') = receiver_email)
-        AND deleted_by_receiver = FALSE
-    )
+    auth.uid() = receiver_id OR 
+    LOWER(auth.jwt() ->> 'email') = LOWER(receiver_email)
 );
 
 -- Policy untuk Capsules (INSERT): User yang membuat data kapsul harus menyimpan id-nya sebagai sender_id
@@ -52,19 +50,19 @@ WITH CHECK (
     auth.uid() = sender_id
 );
 
--- Policy untuk Capsules (UPDATE): Sender boleh mengubah, dan Receiver boleh mengubah status deleted_by_receiver
+-- Policy untuk Capsules (UPDATE): Sender boleh mengubah data, dan Receiver boleh mengubah status deleted_by_receiver
 DROP POLICY IF EXISTS "Users can update their sent or received capsules" ON capsules;
 CREATE POLICY "Users can update their sent or received capsules"
 ON capsules FOR UPDATE
 USING (
     auth.uid() = sender_id OR 
     auth.uid() = receiver_id OR 
-    (auth.jwt() ->> 'email') = receiver_email
+    LOWER(auth.jwt() ->> 'email') = LOWER(receiver_email)
 )
 WITH CHECK (
     auth.uid() = sender_id OR 
     auth.uid() = receiver_id OR 
-    (auth.jwt() ->> 'email') = receiver_email
+    LOWER(auth.jwt() ->> 'email') = LOWER(receiver_email)
 );
 
 -- Policy untuk Capsules (DELETE): Hanya Sender yang boleh menghapus kapsulnya

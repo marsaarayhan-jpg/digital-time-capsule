@@ -52,9 +52,12 @@ export default function CapsuleDetail() {
       const isOwner =
         session.user.id === capsuleData.sender_id ||
         session.user.id === capsuleData.receiver_id ||
-        session.user.email === capsuleData.receiver_email;
+        session.user.email?.toLowerCase() === capsuleData.receiver_email?.toLowerCase();
 
-      if (!isOwner) {
+      if (!isOwner || (capsuleData.deleted_by_receiver && session.user.id !== capsuleData.sender_id)) {
+        if (capsuleData.deleted_by_receiver && session.user.id !== capsuleData.sender_id) {
+          toast.info("This capsule has been removed from your vault view.");
+        }
         router.push("/dashboard");
         return;
       }
