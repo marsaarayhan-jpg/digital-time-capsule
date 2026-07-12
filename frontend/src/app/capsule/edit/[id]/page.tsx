@@ -69,13 +69,6 @@ export default function EditCapsule({ params }: { params: Promise<{ id: string }
         return;
       }
 
-      // Check if capsule is still locked
-      if (getCapsuleLockStatus(capsule.open_date) === "unlocked") {
-        setError("Unsealed capsules cannot be edited.");
-        setLoading(false);
-        return;
-      }
-
       // DEKRIPSI JUDUL DAN PESAN UNTUK DITAMPILKAN DI FORM
       setFormData({
         title: decryptMessage(capsule.title),

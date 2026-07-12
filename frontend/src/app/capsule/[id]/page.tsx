@@ -9,7 +9,7 @@ import type { Capsule, Comment } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import CountdownTimer from "@/components/CountdownTimer";
 import { motion } from "framer-motion";
-import { Lock, Unlock, Send, Trash2 } from "lucide-react";
+import { Lock, Unlock, Send, Trash2, Edit3, X, Check } from "lucide-react";
 import { decryptMessage, encryptMessage } from "@/lib/encryptionUtils";
 import { toast } from "sonner";
 import ConfirmationModal from "@/components/ConfirmationModal";
@@ -25,6 +25,8 @@ export default function CapsuleDetail() {
   const [newComment, setNewComment] = useState("");
   const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
 
   useEffect(() => {
     const fetchCapsule = async () => {
@@ -155,6 +157,36 @@ export default function CapsuleDetail() {
     }
   };
 
+  const handleUpdateComment = async (commentId: string) => {
+    if (!editingCommentText.trim()) return;
+    const encryptedComment = encryptMessage(editingCommentText);
+    const { error } = await supabase
+      .from("comments")
+      .update({ comment: encryptedComment })
+      .eq("id", commentId);
+
+    if (!error) {
+      setEditingCommentId(null);
+      setEditingCommentText("");
+      toast.success("Reflection updated");
+    } else {
+      toast.error("Failed to update reflection");
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    const { error } = await supabase
+      .from("comments")
+      .delete()
+      .eq("id", commentId);
+
+    if (!error) {
+      toast.success("Reflection removed");
+    } else {
+      toast.error("Failed to remove reflection");
+    }
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center bg-parchment">
@@ -245,7 +277,7 @@ export default function CapsuleDetail() {
                   href={`/capsule/edit/${id}`}
                   className="px-8 py-3.5 border border-gold/30 text-gold/90 font-sans text-xs uppercase tracking-[0.25em] hover:bg-gold hover:text-espresso transition-all duration-300 flex items-center gap-3 font-bold"
                 >
-                   Edit Locked Capsule
+                   Edit Capsule
                 </Link>
                 <button
                   onClick={() => setIsDeleteModalOpen(true)}
@@ -288,7 +320,13 @@ export default function CapsuleDetail() {
               </div>
 
               {isSender && (
-                <div className="mt-8 flex justify-center">
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+                  <Link
+                    href={`/capsule/edit/${id}`}
+                    className="px-6 py-2.5 border border-gold/30 text-gold/90 font-sans text-xs uppercase tracking-[0.25em] hover:bg-gold hover:text-espresso transition-all duration-300 flex items-center gap-2.5 font-bold"
+                  >
+                    Edit Capsule
+                  </Link>
                   <button
                     onClick={() => setIsDeleteModalOpen(true)}
                     className="px-6 py-2.5 border border-terracotta/40 text-terracotta font-sans text-xs uppercase tracking-[0.25em] hover:bg-terracotta hover:text-parchment transition-all duration-300 flex items-center gap-2.5 font-bold"
@@ -346,11 +384,64 @@ export default function CapsuleDetail() {
                       <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-terracotta/70 bg-terracotta/10 border border-terracotta/20 px-2.5 py-1">
                         {comment.user_id === capsule.sender_id ? "Sender" : "Recipient"}
                       </span>
-                      <span className="font-sans text-[10px] text-parchment/40">
-                        {new Date(comment.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="font-sans text-[10px] text-parchment/40">
+                          {new Date(comment.created_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                        </span>
+                        {user?.id === comment.user_id && (
+                          <div className="flex items-center gap-1.5 ml-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingCommentId(comment.id);
+                                setEditingCommentText(comment.comment);
+                              }}
+                              className="p-1 text-parchment/50 hover:text-gold transition-colors"
+                              title="Edit Reflection"
+                            >
+                              <Edit3 size={13} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteComment(comment.id)}
+                              className="p-1 text-parchment/50 hover:text-terracotta transition-colors"
+                              title="Delete Reflection"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <p className="font-serif text-lg font-light text-parchment/90 leading-relaxed">{comment.comment}</p>
+
+                    {editingCommentId === comment.id ? (
+                      <div className="space-y-3 mt-2">
+                        <textarea
+                          rows={2}
+                          value={editingCommentText}
+                          onChange={(e) => setEditingCommentText(e.target.value)}
+                          className="w-full bg-black/50 border border-gold/40 outline-none p-3 font-serif text-base text-parchment resize-none"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setEditingCommentId(null)}
+                            className="px-3 py-1 border border-parchment/20 text-parchment/60 font-sans text-[10px] uppercase hover:bg-parchment/10"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateComment(comment.id)}
+                            className="px-3 py-1 bg-gold text-espresso font-sans text-[10px] uppercase font-bold hover:bg-terracotta hover:text-parchment"
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="font-serif text-lg font-light text-parchment/90 leading-relaxed whitespace-pre-wrap">{comment.comment}</p>
+                    )}
                   </motion.div>
                 ))}
               </div>

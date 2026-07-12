@@ -56,18 +56,16 @@ export default function CapsuleCard({ id, title, openDate, status, type, onDelet
           <div className="flex items-center gap-3">
             {type === "sent" && (
               <div className="flex items-center gap-2.5 opacity-85 group-hover:opacity-100 transition-opacity duration-300">
-                {status === "locked" && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(`/capsule/edit/${id}`);
-                    }}
-                    className="p-2 rounded hover:bg-gold/15 text-parchment/70 hover:text-gold transition-colors border border-parchment/10 hover:border-gold/30"
-                    title="Edit Capsule"
-                  >
-                    <Edit3 size={15} />
-                  </button>
-                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/capsule/edit/${id}`);
+                  }}
+                  className="p-2 rounded hover:bg-gold/15 text-parchment/70 hover:text-gold transition-colors border border-parchment/10 hover:border-gold/30"
+                  title="Edit Capsule"
+                >
+                  <Edit3 size={15} />
+                </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

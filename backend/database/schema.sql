@@ -97,6 +97,17 @@ WITH CHECK (
     ) AND auth.uid() = user_id
 );
 
+-- Policy untuk Comments (UPDATE): Hanya pemilik komentar yang boleh mengubah
+CREATE POLICY "Users can update their own comments"
+ON comments FOR UPDATE
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+-- Policy untuk Comments (DELETE): Hanya pemilik komentar yang boleh menghapus
+CREATE POLICY "Users can delete their own comments"
+ON comments FOR DELETE
+USING (auth.uid() = user_id);
+
 -- 6. Receiver Handling Logic
 
 -- A. Saat capsule dibuat, cek apakah email penerima sudah terdaftar
