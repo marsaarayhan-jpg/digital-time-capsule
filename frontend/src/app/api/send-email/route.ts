@@ -7,21 +7,6 @@ import { Redis } from "@upstash/redis";
 // Tandai route ini sebagai dynamic agar Vercel tidak mencoba me-render secara statis saat build
 export const dynamic = 'force-dynamic';
 
-// 1. Setup Rate Limiting (Upstash Redis)
-const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
-  ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    })
-  : null;
-
-const ratelimit = redis 
-  ? new Ratelimit({
-      redis: redis,
-      limiter: Ratelimit.slidingWindow(1, "60 s"),
-    })
-  : null;
-
 export async function POST(request: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -44,7 +29,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Akses Ditolak: Anda harus login untuk mengirim email.' }, { status: 401 });
     }
 
-    // 3. KEAMANAN: Rate Limiting
+    // 3. KEAMANAN: Rate Limiting (Inisialisasi dinamis agar aman saat rotasi kredensial di Vercel)
+    const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+      ? new Redis({
+          url: process.env.UPSTASH_REDIS_REST_URL.trim(),
+          token: process.env.UPSTASH_REDIS_REST_TOKEN.trim(),
+        })
+      : null;
+
+    const ratelimit = redis 
+      ? new Ratelimit({
+          redis: redis,
+          limiter: Ratelimit.slidingWindow(1, "60 s"),
+        })
+      : null;
+
     if (ratelimit) {
       try {
         const { success, limit, reset, remaining } = await ratelimit.limit(user.id);
