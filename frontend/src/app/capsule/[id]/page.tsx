@@ -127,12 +127,25 @@ export default function CapsuleDetail() {
 
   const confirmDelete = async () => {
     if (!capsule) return;
-    const { error } = await deleteCapsuleComplete(id, capsule.photo_url);
-    if (error) {
-      toast.error("Failed to delete capsule", { description: error.message });
+    if (isSender) {
+      const { error } = await deleteCapsuleComplete(id, capsule.photo_url);
+      if (error) {
+        toast.error("Failed to delete capsule", { description: error.message });
+      } else {
+        toast.success("Capsule Deleted", { description: "The memory and its photo have been permanently removed." });
+        router.push("/dashboard");
+      }
     } else {
-      toast.success("Capsule Deleted", { description: "The memory and its photo have been permanently removed." });
-      router.push("/dashboard");
+      const { error } = await supabase
+        .from("capsules")
+        .update({ deleted_by_receiver: true })
+        .eq("id", id);
+      if (error) {
+        toast.error("Failed to remove capsule from vault", { description: error.message });
+      } else {
+        toast.success("Removed from Vault", { description: "This received capsule has been removed from your vault." });
+        router.push("/dashboard");
+      }
     }
     setIsDeleteModalOpen(false);
   };
@@ -265,26 +278,28 @@ export default function CapsuleDetail() {
               </div>
             </div>
 
-            {/* Edit & Delete Buttons for Sender */}
-            {isSender && (
+            {/* Edit & Delete Buttons */}
+            {(isSender || isReceiver) && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1 }}
                 className="mt-12 flex flex-wrap items-center justify-center gap-4"
               >
-                <Link
-                  href={`/capsule/edit/${id}`}
-                  className="px-8 py-3.5 border border-gold/30 text-gold/90 font-sans text-xs uppercase tracking-[0.25em] hover:bg-gold hover:text-espresso transition-all duration-300 flex items-center gap-3 font-bold"
-                >
-                   Edit Capsule
-                </Link>
+                {isSender && (
+                  <Link
+                    href={`/capsule/edit/${id}`}
+                    className="px-8 py-3.5 border border-gold/30 text-gold/90 font-sans text-xs uppercase tracking-[0.25em] hover:bg-gold hover:text-espresso transition-all duration-300 flex items-center gap-3 font-bold"
+                  >
+                     Edit Capsule
+                  </Link>
+                )}
                 <button
                   onClick={() => setIsDeleteModalOpen(true)}
                   className="px-8 py-3.5 border border-terracotta/40 text-terracotta font-sans text-xs uppercase tracking-[0.25em] hover:bg-terracotta hover:text-parchment transition-all duration-300 flex items-center gap-3 font-bold"
                 >
                   <Trash2 size={15} />
-                  Delete Capsule
+                  {isSender ? "Delete Capsule" : "Remove from Vault"}
                 </button>
               </motion.div>
             )}
@@ -319,20 +334,22 @@ export default function CapsuleDetail() {
                 <span>{new Date(capsule.open_date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
               </div>
 
-              {isSender && (
+              {(isSender || isReceiver) && (
                 <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-                  <Link
-                    href={`/capsule/edit/${id}`}
-                    className="px-6 py-2.5 border border-gold/30 text-gold/90 font-sans text-xs uppercase tracking-[0.25em] hover:bg-gold hover:text-espresso transition-all duration-300 flex items-center gap-2.5 font-bold"
-                  >
-                    Edit Capsule
-                  </Link>
+                  {isSender && (
+                    <Link
+                      href={`/capsule/edit/${id}`}
+                      className="px-6 py-2.5 border border-gold/30 text-gold/90 font-sans text-xs uppercase tracking-[0.25em] hover:bg-gold hover:text-espresso transition-all duration-300 flex items-center gap-2.5 font-bold"
+                    >
+                      Edit Capsule
+                    </Link>
+                  )}
                   <button
                     onClick={() => setIsDeleteModalOpen(true)}
                     className="px-6 py-2.5 border border-terracotta/40 text-terracotta font-sans text-xs uppercase tracking-[0.25em] hover:bg-terracotta hover:text-parchment transition-all duration-300 flex items-center gap-2.5 font-bold"
                   >
                     <Trash2 size={14} />
-                    Delete Capsule
+                    {isSender ? "Delete Capsule" : "Remove from Vault"}
                   </button>
                 </div>
               )}
@@ -470,12 +487,17 @@ export default function CapsuleDetail() {
 
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
-        title="Delete Capsule"
-        message="Are you sure you want to permanently delete this memory? This will also remove any attached photos from storage."
-        confirmText="Delete Permanently"
+        title={isSender ? "Delete Capsule" : "Remove from Vault?"}
+        message={
+          isSender
+            ? "Are you sure you want to permanently delete this memory? This will also remove any attached photos from storage."
+            : "Are you sure you want to remove this received capsule? It will disappear from your vault, but the sender can still see their sent record (1-way deletion)."
+        }
+        confirmText={isSender ? "Delete Permanently" : "Remove from Vault"}
         cancelText="Keep Memory"
         onConfirm={confirmDelete}
         onCancel={() => setIsDeleteModalOpen(false)}
+        isDestructive={true}
       />
     </main>
   );

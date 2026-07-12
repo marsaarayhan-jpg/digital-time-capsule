@@ -12,6 +12,7 @@ export interface Capsule {
   open_date: string;
   photo_url?: string | null;
   notified: boolean;
+  deleted_by_receiver?: boolean;
   created_at: string;
 }
 

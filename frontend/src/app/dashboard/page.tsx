@@ -51,7 +51,7 @@ export default function Dashboard() {
         .eq("sender_id", session.user.id)
         .order("created_at", { ascending: false });
 
-      setReceivedCapsules(received || []);
+      setReceivedCapsules((received || []).filter(c => !c.deleted_by_receiver));
       setSentCapsules(sent || []);
       setLoading(false);
     };
@@ -73,19 +73,40 @@ export default function Dashboard() {
     if (!idToDelete) return;
 
     const targetCapsule = [...sentCapsules, ...receivedCapsules].find(c => c.id === idToDelete);
-    const { error } = await deleteCapsuleComplete(idToDelete, targetCapsule?.photo_url);
+    const isSent = sentCapsules.some(c => c.id === idToDelete);
 
-    if (error) {
-      toast.error("Failed to delete capsule", {
-        description: error.message
-      });
+    if (isSent) {
+      const { error } = await deleteCapsuleComplete(idToDelete, targetCapsule?.photo_url);
+
+      if (error) {
+        toast.error("Failed to delete capsule", {
+          description: error.message
+        });
+      } else {
+        setSentCapsules((prev) => prev.filter((cap) => cap.id !== idToDelete));
+        toast.success("Capsule Deleted", {
+          description: "The memory and its photo have been permanently removed from the vault and storage."
+        });
+      }
     } else {
-      setSentCapsules((prev) => prev.filter((cap) => cap.id !== idToDelete));
-      setReceivedCapsules((prev) => prev.filter((cap) => cap.id !== idToDelete));
-      toast.success("Capsule Deleted", {
-        description: "The memory and its photo have been permanently removed from the vault and storage."
-      });
+      // 1-way soft delete (Hapus 1 arah untuk penerima)
+      const { error } = await supabase
+        .from("capsules")
+        .update({ deleted_by_receiver: true })
+        .eq("id", idToDelete);
+
+      if (error) {
+        toast.error("Failed to remove capsule from vault", {
+          description: error.message
+        });
+      } else {
+        setReceivedCapsules((prev) => prev.filter((cap) => cap.id !== idToDelete));
+        toast.success("Removed from Vault", {
+          description: "This received capsule has been removed from your vault view (1-way deletion)."
+        });
+      }
     }
+
     setIsDeleteModalOpen(false);
     setIdToDelete(null);
   };
@@ -207,9 +228,13 @@ export default function Dashboard() {
 
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
-        title="Destroy Memory?"
-        message="Are you sure you want to delete this capsule? This action is permanent and cannot be undone."
-        confirmText="Destroy Forever"
+        title={sentCapsules.some(c => c.id === idToDelete) ? "Destroy Memory?" : "Remove from Vault?"}
+        message={
+          sentCapsules.some(c => c.id === idToDelete)
+            ? "Are you sure you want to delete this capsule? This action is permanent and cannot be undone."
+            : "Are you sure you want to remove this received capsule? It will disappear from your vault view, but the sender's archive remains intact (1-way deletion)."
+        }
+        confirmText={sentCapsules.some(c => c.id === idToDelete) ? "Destroy Forever" : "Remove from Vault"}
         cancelText="Keep Memory"
         onConfirm={confirmDelete}
         onCancel={() => setIsDeleteModalOpen(false)}

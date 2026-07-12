@@ -14,6 +14,7 @@ CREATE TABLE capsules (
     open_date DATE NOT NULL,
     photo_url TEXT,
     notified BOOLEAN DEFAULT FALSE,
+    deleted_by_receiver BOOLEAN DEFAULT FALSE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -32,14 +33,16 @@ CREATE TABLE comments (
 ALTER TABLE capsules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comments ENABLE ROW LEVEL SECURITY;
 
--- Policy untuk Capsules (SELECT): Data dapat dilihat jika user adalah sender, receiver_id cocok, atau email cocok
+-- Policy untuk Capsules (SELECT): Data dapat dilihat jika user adalah sender, atau receiver yang belum menghapusnya (soft delete 1 arah)
 DROP POLICY IF EXISTS "Users can view their own sent or received capsules" ON capsules;
 CREATE POLICY "Users can view their own sent or received capsules"
 ON capsules FOR SELECT
 USING (
     auth.uid() = sender_id OR 
-    auth.uid() = receiver_id OR 
-    (auth.jwt() ->> 'email') = receiver_email
+    (
+        (auth.uid() = receiver_id OR (auth.jwt() ->> 'email') = receiver_email)
+        AND deleted_by_receiver = FALSE
+    )
 );
 
 -- Policy untuk Capsules (INSERT): User yang membuat data kapsul harus menyimpan id-nya sebagai sender_id
@@ -49,15 +52,19 @@ WITH CHECK (
     auth.uid() = sender_id
 );
 
--- Policy untuk Capsules (UPDATE): Hanya Sender yang boleh mengubah, dan JARANG boleh jika sudah terbuka (opsional, untuk keamanan ketat)
+-- Policy untuk Capsules (UPDATE): Sender boleh mengubah, dan Receiver boleh mengubah status deleted_by_receiver
 DROP POLICY IF EXISTS "Users can update their sent or received capsules" ON capsules;
 CREATE POLICY "Users can update their sent or received capsules"
 ON capsules FOR UPDATE
 USING (
-    auth.uid() = sender_id
+    auth.uid() = sender_id OR 
+    auth.uid() = receiver_id OR 
+    (auth.jwt() ->> 'email') = receiver_email
 )
 WITH CHECK (
-    auth.uid() = sender_id
+    auth.uid() = sender_id OR 
+    auth.uid() = receiver_id OR 
+    (auth.jwt() ->> 'email') = receiver_email
 );
 
 -- Policy untuk Capsules (DELETE): Hanya Sender yang boleh menghapus kapsulnya
